@@ -110,7 +110,7 @@ def get_current_user(token: str = Cookie(None)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     return user
 
-@app.post("/register/", response_model=Token)
+@app.post("/register", response_model=Token)
 async def register(user: User, response: Response):
     logger.info("Received registration request: %s", user.dict())
     
@@ -140,7 +140,7 @@ async def register(user: User, response: Response):
         "token_type": "bearer"
     }
 
-@app.post("/login/", response_model=Token)
+@app.post("/login", response_model=Token)
 async def login(login_request: LoginRequest, response: Response):
     user = users_collection.find_one({"username": login_request.username})
     if not user or not verify_password(login_request.password, user["hashed_password"]):
@@ -158,12 +158,12 @@ async def login(login_request: LoginRequest, response: Response):
         "token_type": "bearer"
     }
 
-@app.post("/logout/")
+@app.post("/logout")
 async def logout(response: Response):
     response.delete_cookie(key="token")
     return {"message": "Logged out successfully"}
 
-@app.post("/posts/")
+@app.post("/posts")
 async def create_post(post: Post, user: dict = Depends(get_current_user)):
     post_dict = post.dict()
     post_dict["post_id"] = str(ObjectId())
