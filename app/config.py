@@ -36,7 +36,7 @@ def init_db_client():
     return MotorAsyncIOMotorClient(
         db_uri,
         uuidRepresentation="standard",
-        serverSelectionTimeoutMS=5000  # 5 seconds timeout
+        serverSelectionTimeoutMS=10000  # Increase timeout to 10 seconds
     )
 
 # ...existing code...
