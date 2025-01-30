@@ -14,18 +14,22 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def get_password_hash(password: str) -> str:
+    """Hash a password using bcrypt."""
     return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a plain password against a hashed password."""
     return pwd_context.verify(plain_password, hashed_password)
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
+    """Create a JWT access token."""
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def decode_token(token: str) -> str:
+    """Decode a JWT token and return the username."""
     try:
         if blacklist_collection.find_one({"token": token}):
             raise HTTPException(status_code=401, detail="Token revoked")
@@ -41,6 +45,7 @@ def decode_token(token: str) -> str:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
+    """Get the current user from the JWT token."""
     username = decode_token(token)
     if not username:
         raise HTTPException(

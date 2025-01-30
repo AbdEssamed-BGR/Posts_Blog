@@ -7,10 +7,14 @@ from bson import ObjectId
 
 app = FastAPI()
 
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the FastAPI application with MongoDB"}
+
 @app.post("/register", response_model=Token)
 async def register(user: User, response: Response):
     existing_user = get_user_by_username(user.username)
-    if existing_user:
+    if (existing_user):
         raise HTTPException(status_code=400, detail="Username already exists")
     
     hashed_password = get_password_hash(user.password)
