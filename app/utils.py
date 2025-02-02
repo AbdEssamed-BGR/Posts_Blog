@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 import logging
+from typing import Optional  # Add this import
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from app.config import SECRET_KEY, ALGORITHM
+from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.database import blacklist_collection, users_collection
 from app.models import TokenBlacklist
 from fastapi import HTTPException, Depends, status, Request, Query
@@ -29,16 +30,17 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(data: dict, expires_delta: timedelta = None):
     """Create a JWT access token."""
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def decode_token(token: str) -> str:
+async def decode_token(token: str) -> str:
     """Decode a JWT token and return the username."""
     try:
         logger.info(f"Decoding token: {token}")
-        if blacklist_collection.find_one({"token": token}):
-            logger.warning("Token revoked")
+        blacklisted_token = await blacklist_collection.find_one({"token": token})
+        if blacklisted_token:
+            logger.warning(f"Token revoked: {blacklisted_token}")
             raise HTTPException(status_code=401, detail="Token revoked")
         
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -65,11 +67,11 @@ async def get_user_by_username(username: str):
         logger.info(f"User not found: {username}")
     return user
 
-async def get_current_user(request: Request, token: str = Query(None)):
+async def get_current_user(request: Request, token: Optional[str] = None):
     """Get the current user from the JWT token in cookies or query parameter."""
-    if not token:
+    if token is None:
         token = request.cookies.get("token")
-    if not token:
+    if token is None:
         logger.warning("No token found in cookies or query parameter")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -77,7 +79,7 @@ async def get_current_user(request: Request, token: str = Query(None)):
             headers={"WWW-Authenticate": "Bearer"},
         )
     logger.info(f"Decoding token: {token}")
-    username = decode_token(token)
+    username = await decode_token(token)
     if not username:
         logger.warning("Invalid authentication credentials")
         raise HTTPException(

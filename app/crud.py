@@ -27,7 +27,7 @@ async def get_user_by_username(username: str):
         logger.info(f"User not found: {username}")
     return user
 
-async def update_user_posts(username: str, post_data: dict):
+async def create_user_posts(username: str, post_data: dict):
     """Add a new post to a user's posts."""
     return await users_collection.update_one(
         {"username": username},
@@ -38,6 +38,14 @@ async def get_user_posts(username: str):
     """Retrieve all posts for a user."""
     user = await users_collection.find_one({"username": username})
     return user.get("posts", []) if user else []
+
+async def get_all_posts():
+    """Retrieve all posts from all users."""
+    posts = []
+    async for user in users_collection.find():
+        user_posts = user.get("posts", [])
+        posts.extend(user_posts)
+    return posts
 
 async def get_all_users():
     """Retrieve all users."""

@@ -1,7 +1,7 @@
 import logging
 from fastapi import FastAPI, HTTPException, Depends, Response, Request, Query
 from app.models import User, LoginRequest, Post, Token
-from app.crud import create_user, get_user_by_username, update_user_posts, get_user_posts, update_post, delete_post, get_all_users
+from app.crud import create_user, get_user_by_username, create_user_posts, get_user_posts, get_all_posts, update_post, delete_post, get_all_users
 from app.utils import get_password_hash, verify_password, create_access_token, get_current_user
 from datetime import timedelta
 from bson import ObjectId
@@ -59,22 +59,19 @@ async def logout(response: Response):
 @app.post("/posts")
 async def create_post(post: Post, request: Request, token: str = Query(...)):
     user = await get_current_user(request, token)
-    post_dict = post.dict()
+    post_dict = post.model_dump()
     post_dict["post_id"] = str(ObjectId())
-    post_dict["author"] = user["username"]
-    
-    result = await update_user_posts(user["username"], post_dict)
+    post_dict["author"] = user["username"]  
+    result = await create_user_posts(user["username"], post_dict)
     if result.modified_count == 0:
         raise HTTPException(status_code=500, detail="Failed to create post")
-    
-    return {"message": "Post created successfully"}
 
-@app.get("/posts/")
+@app.get("/posts")
 async def get_posts():
-    posts = await get_user_posts("")
+    posts = await get_all_posts()
     return posts
 
-@app.get("/my-posts/")
+@app.get("/my-posts")
 async def get_my_posts(request: Request, token: str = Query(...)):
     user = await get_current_user(request, token)
     user_data = await get_user_posts(user["username"])
@@ -102,7 +99,7 @@ async def delete_post(post_id: str, request: Request, token: str = Query(...)):
     
     return {"message": "Post deleted"}
 
-@app.get("/users/")
+@app.get("/users")
 async def list_users():
     users = await get_all_users()
     return users
