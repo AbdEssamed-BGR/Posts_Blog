@@ -1,5 +1,4 @@
 import os
-import asyncio
 import socket
 from motor.motor_asyncio import AsyncIOMotorClient as MotorAsyncIOMotorClient
 from dotenv import load_dotenv

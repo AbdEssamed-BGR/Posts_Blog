@@ -1,13 +1,12 @@
 from datetime import datetime, timedelta
 import logging
-from typing import Optional  # Add this import
+from typing import Optional  
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-from app.database import blacklist_collection, users_collection
-from app.models import TokenBlacklist
-from fastapi import HTTPException, Depends, status, Request, Query
+from fastapi import HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
+from app.database import users_collection, blacklist_collection  
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

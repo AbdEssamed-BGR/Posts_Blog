@@ -1,5 +1,5 @@
 import logging
-from fastapi import FastAPI, HTTPException, Depends, Response, Request, Query
+from fastapi import FastAPI, HTTPException, Response, Request, Query
 from app.models import User, LoginRequest, Post, Token
 from app.crud import create_user, get_user_by_username, create_user_posts, get_user_posts, get_all_posts, update_post, delete_user_post, get_all_users
 from app.utils import get_password_hash, verify_password, create_access_token, get_current_user
@@ -81,7 +81,7 @@ async def get_my_posts(request: Request, token: str = Query(...)):
 async def edit_post(post_id: str, post: Post, request: Request, token: str = Query(...)):
     user = await get_current_user(request, token)
 
-    update_data = post.dict(exclude_unset=True)
+    update_data = post.model_dump(exclude_unset=True)
     update_data["post_id"] = post_id
     
     if not update_data:

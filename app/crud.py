@@ -1,9 +1,5 @@
 import logging
-from app.database import users_collection, blacklist_collection
-from bson import ObjectId
-from app.models import Post
-from datetime import datetime
-
+from app.database import users_collection
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
