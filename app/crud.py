@@ -55,14 +55,30 @@ async def get_all_users():
         users.append(user)
     return users
 
+
 async def update_post(username: str, post_id: str, update_data: dict):
-    """Update a specific post for a user."""
-    return await users_collection.update_one(
+    """Update a specific post for a user while preserving the post_id."""
+    
+    update_fields = {}
+    
+    if "title" in update_data:
+        update_fields["posts.$.title"] = update_data["title"]
+    
+    if "description" in update_data:
+        update_fields["posts.$.description"] = update_data["description"]
+
+    if not update_fields:
+        return None
+
+    result = await users_collection.update_one(
         {"username": username, "posts.post_id": post_id},
-        {"$set": {"posts.$": update_data}}
+        {"$set": update_fields}
     )
 
-async def delete_post(username: str, post_id: str):
+    return result
+
+
+async def delete_user_post(username: str, post_id: str):
     """Delete a specific post for a user."""
     return await users_collection.update_one(
         {"username": username},

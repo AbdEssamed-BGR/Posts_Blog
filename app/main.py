@@ -1,7 +1,7 @@
 import logging
 from fastapi import FastAPI, HTTPException, Depends, Response, Request, Query
 from app.models import User, LoginRequest, Post, Token
-from app.crud import create_user, get_user_by_username, create_user_posts, get_user_posts, get_all_posts, update_post, delete_post, get_all_users
+from app.crud import create_user, get_user_by_username, create_user_posts, get_user_posts, get_all_posts, update_post, delete_user_post, get_all_users
 from app.utils import get_password_hash, verify_password, create_access_token, get_current_user
 from datetime import timedelta
 from bson import ObjectId
@@ -78,25 +78,31 @@ async def get_my_posts(request: Request, token: str = Query(...)):
     return user_data
 
 @app.patch("/posts/{post_id}")
-async def update_post(post_id: str, post: Post, request: Request, token: str = Query(...)):
+async def edit_post(post_id: str, post: Post, request: Request, token: str = Query(...)):
     user = await get_current_user(request, token)
+
     update_data = post.dict(exclude_unset=True)
+    update_data["post_id"] = post_id
+    
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
-    
+
     result = await update_post(user["username"], post_id, update_data)
-    if result.matched_count == 0:
+
+    if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Post not found or unauthorized")
-    
-    return {"message": "Post updated"}
+
+    return {"message": "Post updated successfully"}
+
+
 
 @app.delete("/posts/{post_id}")
 async def delete_post(post_id: str, request: Request, token: str = Query(...)):
     user = await get_current_user(request, token)
-    result = await delete_post(user["username"], post_id)
+    result = await delete_user_post(user["username"], post_id)
+    logger.info(f"Deleting post {post_id} for user {result}")
     if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Post not found or unauthorized")
-    
+        raise HTTPException(status_code=404, detail="Post not found or unauthorized") 
     return {"message": "Post deleted"}
 
 @app.get("/users")

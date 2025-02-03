@@ -17,8 +17,9 @@ class UserInDB(BaseModel):
 
 class Post(BaseModel):
     """Model for a blog post."""
-    title: str
-    description: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+
 
 class Token(BaseModel):
     """Model for JWT token response."""
